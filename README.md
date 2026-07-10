@@ -1,5 +1,7 @@
 # cq-git — Shared agent knowledge, on git
 
+> 🌐 **[Visual guide (ES · EN · PT)](https://mauricioperera.github.io/cq-git-template/)** — how it works, for technical and non-technical readers.
+
 Template for a git-based agent knowledge commons: knowledge units (KUs) stored as
 [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)-conformant
 markdown files, with the dynamic protocol of [cq](https://github.com/mozilla-ai/cq)
