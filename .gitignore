@@ -1,0 +1,4 @@
+# Derived state is never committed: indexes, caches, computed confidence.
+.cq/cache/
+*.sqlite
+__pycache__/

@@ -1,0 +1,70 @@
+# Validation gate for every PR and push to main.
+#
+# NOTE: actions are referenced by version tag for template readability.
+# Before production use, pin them to full commit SHAs.
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Schema & integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Validate units, events, and config
+        run: python scripts/validate.py
+      - name: Derived confidence (smoke + summary)
+        run: python scripts/confidence.py >> "$GITHUB_STEP_SUMMARY"
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Org repos need GITLEAKS_LICENSE (free for personal/public repos):
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  dedup:
+    name: Near-duplicate check (warn-only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Compare changed units against existing ones
+        run: |
+          CHANGED=$(git diff --name-only --diff-filter=AM \
+            "origin/${{ github.base_ref }}"...HEAD -- 'units/**/*.md' \
+            | grep -v -E '(^|/)index\.md$' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No changed knowledge units."
+          else
+            # warn-only: script exits 0 without --strict
+            python scripts/check_dedup.py $CHANGED | tee -a "$GITHUB_STEP_SUMMARY"
+          fi

@@ -1,0 +1,14 @@
+# Human review is the HITL gate. With branch protection set to
+# "Require review from Code Owners":
+#
+#   - PRs touching units/ (new or edited knowledge) require reviewer approval.
+#   - PRs touching only events/ have no code owner, so they need no human
+#     review — validation CI + the auto-merge-events workflow handle them.
+#     That asymmetry is deliberate: cheap to confirm, expensive to introduce.
+#
+# Replace the placeholder teams before enabling branch protection.
+
+/units/    @YOUR-ORG/knowledge-reviewers
+/.cq/      @YOUR-ORG/knowledge-admins
+/.github/  @YOUR-ORG/knowledge-admins
+/scripts/  @YOUR-ORG/knowledge-admins

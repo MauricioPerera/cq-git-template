@@ -1,0 +1,15 @@
+# Upstream knowledge repos this clone syncs with.
+# Used by a consuming MCP server / CLI; not read by CI.
+#
+# tier:  private | public   (local tier = this repo itself, no entry needed)
+# write: pull-request       events and proposals go out as branch + PR
+#        read-only          never write upstream
+remotes:
+  - name: team
+    url: git@github.com:YOUR-ORG/knowledge.git
+    tier: private
+    write: pull-request
+  # - name: commons
+  #   url: https://github.com/SOME-ORG/cq-commons.git
+  #   tier: public
+  #   write: read-only

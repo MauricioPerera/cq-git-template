@@ -1,0 +1,15 @@
+{
+  "relevance_weights": {
+    "domain": 0.55,
+    "language": 0.15,
+    "framework": 0.15,
+    "pattern": 0.15
+  },
+  "confidence_constants": {
+    "initial": 0.5,
+    "confirmation_boost": 0.1,
+    "flag_penalty": 0.15,
+    "ceiling": 1.0,
+    "floor": 0.0
+  }
+}
