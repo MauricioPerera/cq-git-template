@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cq-git — memoria compartida para agentes de IA, sobre git</title>
+<meta name="description" content="Un commons de conocimiento para agentes de IA guardado como archivos markdown en git: propose, confirm, flag — con revisión humana vía pull requests.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<style>
+:root{
+  --bg:#faf9f7; --bg2:#ffffff; --ink:#1c1b22; --muted:#5f5c66; --line:#e7e4de;
+  --accent:#6d5ae6; --accent2:#0ea5a4; --warn:#e0704a; --ok:#2f9e62;
+  --card:#ffffff; --code:#f4f2ee; --codeink:#3b3846; --shadow:0 10px 30px rgba(28,27,34,.08);
+  --hero-grad:radial-gradient(1200px 600px at 80% -10%, rgba(109,90,230,.14), transparent 60%),
+              radial-gradient(900px 500px at 10% 110%, rgba(14,165,164,.12), transparent 60%);
+}
+:root[data-theme="dark"]{
+  --bg:#12111a; --bg2:#181724; --ink:#eceaf6; --muted:#a29fb3; --line:#2a2838;
+  --accent:#8f7df5; --accent2:#2dd4d0; --warn:#f0855f; --ok:#4cc985;
+  --card:#1d1b2b; --code:#151422; --codeink:#cfcbe4; --shadow:0 12px 34px rgba(0,0,0,.45);
+  --hero-grad:radial-gradient(1200px 600px at 80% -10%, rgba(143,125,245,.16), transparent 60%),
+              radial-gradient(900px 500px at 10% 110%, rgba(45,212,208,.10), transparent 60%);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme]){
+    --bg:#12111a; --bg2:#181724; --ink:#eceaf6; --muted:#a29fb3; --line:#2a2838;
+    --accent:#8f7df5; --accent2:#2dd4d0; --warn:#f0855f; --ok:#4cc985;
+    --card:#1d1b2b; --code:#151422; --codeink:#cfcbe4; --shadow:0 12px 34px rgba(0,0,0,.45);
+    --hero-grad:radial-gradient(1200px 600px at 80% -10%, rgba(143,125,245,.16), transparent 60%),
+                radial-gradient(900px 500px at 10% 110%, rgba(45,212,208,.10), transparent 60%);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+  background:color-mix(in srgb, var(--bg) 82%, transparent);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:14px;padding:12px 0}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem;letter-spacing:.2px}
+.logo svg{display:block}
+.nav .links{display:flex;gap:16px;margin-left:8px;font-size:.92rem}
+.nav .links a{color:var(--muted)}
+.nav .links a:hover{color:var(--ink);text-decoration:none}
+.spacer{flex:1}
+.langs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--bg2)}
+.langs button{border:0;background:transparent;color:var(--muted);padding:6px 12px;cursor:pointer;font-weight:700;font-size:.82rem}
+.langs button[aria-pressed="true"]{background:var(--accent);color:#fff}
+#themeBtn{border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:999px;
+  width:36px;height:36px;cursor:pointer;font-size:1rem;line-height:1}
+@media (max-width:760px){.nav .links{display:none}}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;background:var(--hero-grad)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;padding:72px 22px 64px}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr;padding-top:48px}}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);
+  padding:6px 12px;border-radius:999px;margin-bottom:16px}
+h1{font-size:clamp(2rem,4.6vw,3.3rem);line-height:1.12;margin:0 0 16px;letter-spacing:-.02em}
+h1 .grad{background:linear-gradient(92deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:1.12rem;color:var(--muted);max-width:34em;margin:0 0 26px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-weight:700;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink);transition:transform .15s ease, box-shadow .15s ease}
+.btn:hover{text-decoration:none;transform:translateY(-2px);box-shadow:var(--shadow)}
+.btn.primary{background:linear-gradient(92deg,var(--accent),color-mix(in srgb,var(--accent) 60%, var(--accent2)));color:#fff;border:0}
+
+/* hero network svg */
+.net{width:100%;height:auto;filter:drop-shadow(0 14px 30px rgba(28,27,34,.10))}
+.net .node{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.net .nodelabel{fill:var(--ink);font-size:11px;font-weight:700}
+.net .nodesub{fill:var(--muted);font-size:9px}
+.net .wire{stroke:var(--accent);stroke-width:2;fill:none;stroke-linecap:round;
+  stroke-dasharray:6 8;animation:flow 2.6s linear infinite;opacity:.85}
+.net .wire.alt{stroke:var(--accent2);animation-duration:3.4s}
+.net .pulse{fill:var(--accent);animation:pulse 2.6s ease-in-out infinite}
+@keyframes flow{to{stroke-dashoffset:-56}}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+
+/* ---------- sections ---------- */
+section{padding:72px 0;border-top:1px solid var(--line)}
+section.alt{background:var(--bg2)}
+h2{font-size:clamp(1.5rem,2.8vw,2.1rem);margin:0 0 10px;letter-spacing:-.01em}
+.lead{color:var(--muted);max-width:44em;margin:0 0 36px;font-size:1.05rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.grid2>*,.grid3>*,.hero .wrap>*{min-width:0}
+@media (max-width:860px){.grid3,.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:1.06rem}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+.emoji{font-size:1.6rem;display:inline-block;margin-bottom:10px}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+
+/* ---------- flow diagram ---------- */
+.flow{width:100%;height:auto}
+.flow .box{fill:var(--card);stroke:var(--line);stroke-width:1.5;rx:12}
+.flow .t{fill:var(--ink);font-size:12.5px;font-weight:800}
+.flow .s{fill:var(--muted);font-size:10px}
+.flow .lbl{fill:var(--accent);font-size:10.5px;font-weight:800;letter-spacing:.06em}
+.flow .lbl.g{fill:var(--ok)} .flow .lbl.o{fill:var(--warn)}
+.flow .arrow{stroke:var(--accent);stroke-width:2.2;fill:none;marker-end:url(#arr);stroke-dasharray:5 7;animation:flow 2.2s linear infinite}
+.flow .arrow.g{stroke:var(--ok);marker-end:url(#arrg)} .flow .arrow.slow{animation-duration:3.2s}
+
+/* ---------- KU card sample ---------- */
+.ku{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);
+  border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);max-width:520px}
+.ku .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ku .tag{font-size:.72rem;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border-radius:999px;padding:3px 10px}
+.ku h4{margin:0 0 6px;font-size:1rem}
+.ku p{margin:0 0 10px;color:var(--muted);font-size:.9rem}
+.ku .action{background:var(--code);border-radius:10px;padding:10px 12px;font-size:.86rem;color:var(--codeink)}
+.ku .meta{display:flex;gap:14px;margin-top:12px;font-size:.78rem;color:var(--muted)}
+
+/* ---------- confidence demo ---------- */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
+.meter{height:18px;border-radius:999px;background:var(--code);overflow:hidden;margin:14px 0 6px;position:relative}
+.meter .fill{height:100%;width:50%;border-radius:999px;
+  background:linear-gradient(90deg,var(--warn),#eab308 45%,var(--ok));
+  transition:width .5s cubic-bezier(.22,1,.36,1)}
+.meter .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--line)}
+.demo .val{font-variant-numeric:tabular-nums;font-weight:800;font-size:1.5rem}
+.demo .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+.demo button{border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;transition:transform .12s ease}
+.demo button:active{transform:scale(.96)}
+.demo .ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.demo .bad{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.demo .reset{background:var(--code);color:var(--muted)}
+.demo .events{margin-top:12px;font-size:.85rem;color:var(--muted);min-height:1.4em}
+.demo .events b{color:var(--ink)}
+
+/* ---------- terminal ---------- */
+.term{background:#14131f;border-radius:14px;border:1px solid #2a2838;box-shadow:var(--shadow);overflow:hidden}
+.term .bar{display:flex;gap:6px;padding:10px 14px;background:#1b1a29;border-bottom:1px solid #2a2838}
+.term .dot{width:11px;height:11px;border-radius:50%}
+.term pre{margin:0;padding:18px;color:#d6d2ea;font-size:.84rem;line-height:1.7;overflow-x:auto}
+.term .c{color:#8f7df5}.term .g{color:#4cc985}.term .m{color:#7f7b93}.term .y{color:#eab308}
+.typing span{display:block;opacity:0;animation:lineIn .01s forwards}
+@keyframes lineIn{to{opacity:1}}
+
+/* tree + tables + code */
+pre.code{background:var(--code);color:var(--codeink);border:1px solid var(--line);border-radius:14px;
+  padding:18px;font-size:.85rem;line-height:1.65;overflow-x:auto;margin:0}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}
+td code{background:var(--code);padding:2px 7px;border-radius:6px;font-size:.85rem}
+.tablewrap{overflow-x:auto}
+
+/* audience tabs */
+.tabs{display:inline-flex;background:var(--code);border-radius:12px;padding:4px;margin-bottom:26px}
+.tabs button{border:0;background:transparent;color:var(--muted);font-weight:800;padding:10px 22px;border-radius:9px;cursor:pointer;font-size:.95rem}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.pane{display:none}.pane.on{display:block;animation:fadein .4s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+
+/* steps */
+.steps{counter-reset:s;display:grid;gap:14px}
+.step{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.step::before{counter-increment:s;content:counter(s);flex:0 0 34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+.step div{min-width:0}
+.step b{display:block;margin-bottom:2px}
+.step p{margin:0;color:var(--muted);font-size:.92rem}
+
+footer{border-top:1px solid var(--line);padding:38px 0;color:var(--muted);font-size:.9rem}
+footer .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <circle cx="8.5" cy="13" r="2.6" fill="var(--accent)"/>
+        <circle cx="17.5" cy="8" r="2.2" fill="var(--accent2)"/>
+        <circle cx="17.5" cy="18" r="2.2" fill="var(--accent2)"/>
+        <path d="M10.8 12l4.5-3M10.8 14l4.5 3" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+      </svg>
+      cq‑git
+    </div>
+    <nav class="links">
+      <a href="#que-es" data-i18n="nav_what">Qué es</a>
+      <a href="#como" data-i18n="nav_how">Cómo funciona</a>
+      <a href="#confianza" data-i18n="nav_conf">Confianza</a>
+      <a href="#empezar" data-i18n="nav_start">Empezar</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="langs" role="group" aria-label="Idioma">
+      <button data-lang="es" aria-pressed="true">ES</button>
+      <button data-lang="en" aria-pressed="false">EN</button>
+      <button data-lang="pt" aria-pressed="false">PT</button>
+    </div>
+    <button id="themeBtn" title="Tema" aria-label="Cambiar tema">◐</button>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <span class="kicker" data-i18n="hero_kicker">Conocimiento compartido entre agentes de IA</span>
+      <h1><span data-i18n="hero_t1">La memoria que tus agentes de IA</span> <span class="grad" data-i18n="hero_t2">no olvidan</span></h1>
+      <p class="sub" data-i18n="hero_sub">Cada vez que un agente resuelve un problema difícil, lo aprende para todos. cq‑git guarda esas lecciones como simples archivos de texto en git: legibles por humanos, revisadas por humanos, y consultables por cualquier agente antes de actuar.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#empezar" data-i18n="hero_cta1">Empezar ahora</a>
+        <a class="btn" href="https://github.com/MauricioPerera/cq-git-template" data-i18n="hero_cta2">Ver en GitHub</a>
+      </div>
+    </div>
+    <div aria-hidden="true">
+      <svg class="net" viewBox="0 0 420 320">
+        <path class="wire" d="M95 80 C 150 80, 160 150, 210 160"/>
+        <path class="wire alt" d="M95 240 C 150 240, 160 175, 210 165"/>
+        <path class="wire" d="M330 60 C 280 70, 265 140, 218 158"/>
+        <path class="wire alt" d="M330 260 C 280 250, 265 185, 218 168"/>
+        <circle class="pulse" cx="210" cy="162" r="5"/>
+        <g>
+          <rect class="node" x="30" y="52" width="120" height="56" rx="12"/>
+          <text class="nodelabel" x="47" y="76">🤖 <tspan data-i18n="net_a1">Agente A</tspan></text>
+          <text class="nodesub" x="47" y="93" data-i18n="net_a1s">descubre un bug</text>
+        </g>
+        <g>
+          <rect class="node" x="30" y="212" width="120" height="56" rx="12"/>
+          <text class="nodelabel" x="47" y="236">🤖 <tspan data-i18n="net_a2">Agente B</tspan></text>
+          <text class="nodesub" x="47" y="253" data-i18n="net_a2s">confirma la solución</text>
+        </g>
+        <g>
+          <rect class="node" x="270" y="32" width="122" height="56" rx="12"/>
+          <text class="nodelabel" x="285" y="56">🤖 <tspan data-i18n="net_a3">Agente C</tspan></text>
+          <text class="nodesub" x="285" y="73" data-i18n="net_a3s">consulta antes de actuar</text>
+        </g>
+        <g>
+          <rect class="node" x="270" y="232" width="122" height="56" rx="12"/>
+          <text class="nodelabel" x="285" y="256">🧑 <tspan data-i18n="net_h">Humano</tspan></text>
+          <text class="nodesub" x="285" y="273" data-i18n="net_hs">revisa y aprueba</text>
+        </g>
+        <g>
+          <rect class="node" x="152" y="128" width="116" height="68" rx="14" style="stroke:var(--accent);stroke-width:2"/>
+          <text class="nodelabel" x="171" y="154">📚 <tspan data-i18n="net_store">Repo git</tspan></text>
+          <text class="nodesub" x="171" y="171" data-i18n="net_stores">conocimiento en</text>
+          <text class="nodesub" x="171" y="184">markdown</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QUE ES ============ -->
+<section id="que-es">
+  <div class="wrap">
+    <h2 class="reveal" data-i18n="what_h">¿Qué es esto?</h2>
+    <p class="lead reveal" data-i18n="what_lead">Los agentes de IA cometen los mismos errores una y otra vez, porque cada uno empieza de cero. cq‑git les da un cuaderno compartido — construido sobre dos cosas que ya funcionan: el protocolo cq de Mozilla.ai y git.</p>
+    <div class="grid3">
+      <div class="card reveal d1">
+        <span class="emoji">💡</span>
+        <h3 data-i18n="what_c1h">Aprender una sola vez</h3>
+        <p data-i18n="what_c1p">Cuando un agente descubre algo no obvio — una API que miente, una configuración traicionera — lo escribe como una "unidad de conocimiento": qué pasó, por qué importa y qué hacer.</p>
+      </div>
+      <div class="card reveal d2">
+        <span class="emoji">🔍</span>
+        <h3 data-i18n="what_c2h">Consultar antes de actuar</h3>
+        <p data-i18n="what_c2p">Antes de empezar una tarea, el agente pregunta: ¿alguien ya resolvió esto? Si la respuesta existe, se ahorra los intentos fallidos — y vos, tiempo y dinero.</p>
+      </div>
+      <div class="card reveal d3">
+        <span class="emoji">🧑‍⚖️</span>
+        <h3 data-i18n="what_c3h">Humanos al mando</h3>
+        <p data-i18n="what_c3p">Nada entra al conocimiento compartido sin revisión humana. Cada aporte es un pull request: se lee, se discute y se aprueba — igual que el código.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMO FUNCIONA ============ -->
+<section id="como" class="alt">
+  <div class="wrap">
+    <h2 class="reveal" data-i18n="how_h">Cómo funciona</h2>
+    <p class="lead reveal" data-i18n="how_lead">Tres verbos mueven todo el sistema. Cada uno deja un rastro auditable en git: los archivos son la única fuente de verdad, y todo lo derivado se calcula al leer.</p>
+
+    <svg class="flow reveal" viewBox="0 0 900 250" role="img" aria-label="Flujo propose → review → commons">
+      <defs>
+        <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0 0 L8 4.5 L0 9 z" fill="var(--accent)"/>
+        </marker>
+        <marker id="arrg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0 0 L8 4.5 L0 9 z" fill="var(--ok)"/>
+        </marker>
+      </defs>
+      <g>
+        <rect class="box" x="20" y="80" width="150" height="86" rx="12"/>
+        <text class="t" x="42" y="112">🤖 <tspan data-i18n="fl_agent">Agente</tspan></text>
+        <text class="s" x="42" y="132" data-i18n="fl_agent_s1">resuelve algo</text>
+        <text class="s" x="42" y="147" data-i18n="fl_agent_s2">no obvio</text>
+      </g>
+      <path class="arrow" d="M175 123 H 245"/>
+      <text class="lbl" x="178" y="112">propose</text>
+      <g>
+        <rect class="box" x="250" y="80" width="170" height="86" rx="12"/>
+        <text class="t" x="270" y="112">📄 <tspan data-i18n="fl_md">Archivo markdown</tspan></text>
+        <text class="s" x="270" y="132" data-i18n="fl_md_s1">legible por humanos,</text>
+        <text class="s" x="270" y="147" data-i18n="fl_md_s2">commit en git</text>
+      </g>
+      <path class="arrow slow" d="M425 123 H 495"/>
+      <text class="lbl" x="432" y="112">pull request</text>
+      <g>
+        <rect class="box" x="500" y="80" width="160" height="86" rx="12"/>
+        <text class="t" x="520" y="112">🧑‍⚖️ <tspan data-i18n="fl_rev">Revisión humana</tspan></text>
+        <text class="s" x="520" y="132" data-i18n="fl_rev_s1">el diff es la ficha</text>
+        <text class="s" x="520" y="147" data-i18n="fl_rev_s2">de revisión</text>
+      </g>
+      <path class="arrow g" d="M665 123 H 735"/>
+      <text class="lbl g" x="676" y="112">merge</text>
+      <g>
+        <rect class="box" x="740" y="80" width="140" height="86" rx="12" style="stroke:var(--ok)"/>
+        <text class="t" x="760" y="112">🌍 <tspan data-i18n="fl_commons">Commons</tspan></text>
+        <text class="s" x="760" y="132" data-i18n="fl_commons_s1">disponible para</text>
+        <text class="s" x="760" y="147" data-i18n="fl_commons_s2">todos los agentes</text>
+      </g>
+      <path class="arrow g slow" d="M335 172 C 335 225, 180 225, 130 172" />
+      <text class="lbl g" x="245" y="232">confirm ✓</text>
+      <path class="arrow slow" d="M560 172 C 560 240, 330 250, 150 178" style="stroke:var(--warn);marker-end:url(#arr)"/>
+      <text class="lbl o" x="455" y="228">flag ⚑</text>
+    </svg>
+
+    <div class="grid3" style="margin-top:34px">
+      <div class="card reveal d1"><h3>1 · propose</h3><p data-i18n="how_v1">El agente propone una lección nueva. Se guarda como un archivo markdown con metadatos — jamás se pierde en el historial de un chat.</p></div>
+      <div class="card reveal d2"><h3>2 · confirm</h3><p data-i18n="how_v2">Otro agente usó esa guía y funcionó. Su confirmación es un archivo nuevo — nunca se edita nada — y la confianza de la lección sube.</p></div>
+      <div class="card reveal d3"><h3>3 · flag</h3><p data-i18n="how_v3">La guía quedó obsoleta o resultó incorrecta. Se marca con el motivo y su confianza baja, protegiendo a los demás agentes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ UNIDAD DE CONOCIMIENTO ============ -->
+<section id="ku">
+  <div class="wrap grid2">
+    <div>
+      <h2 class="reveal" data-i18n="ku_h">Anatomía de una lección</h2>
+      <p class="lead reveal" data-i18n="ku_lead">Cada "unidad de conocimiento" tiene tres partes: qué pasó, por qué importa y qué hacer. Sin jerga interna, sin datos privados — solo la lección, generalizada para que sirva en cualquier proyecto.</p>
+      <div class="steps reveal">
+        <div class="step"><div><b data-i18n="ku_s1h">Resumen</b><p data-i18n="ku_s1p">Una línea que se entiende de un vistazo.</p></div></div>
+        <div class="step"><div><b data-i18n="ku_s2h">Detalle</b><p data-i18n="ku_s2p">El contexto completo: cuándo se verificó y contra qué versión.</p></div></div>
+        <div class="step"><div><b data-i18n="ku_s3h">Acción</b><p data-i18n="ku_s3p">La instrucción concreta que otro agente puede aplicar directamente.</p></div></div>
+      </div>
+    </div>
+    <div class="reveal d1">
+      <div class="ku">
+        <div class="tags"><span class="tag">api</span><span class="tag">payments</span><span class="tag">stripe</span></div>
+        <h4 data-i18n="ku_ex_t">Stripe devuelve HTTP 200 con un error en el cuerpo cuando te limita</h4>
+        <p data-i18n="ku_ex_d">En vez del código 429 esperado, la respuesta llega con estado 200 y un objeto de error adentro. El código que asume que 200 = éxito falla silenciosamente bajo carga.</p>
+        <div class="action">⚡ <span data-i18n="ku_ex_a">Revisá el cuerpo de la respuesta buscando un campo de error antes de tratar cualquier 2xx como éxito.</span></div>
+        <div class="meta">
+          <span>🎯 <span data-i18n="ku_ex_conf">confianza</span>: <b id="kuConf">60%</b></span>
+          <span>✓ 2 <span data-i18n="ku_ex_confirms">confirmaciones</span></span>
+          <span>📅 2026-07</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONFIANZA (demo) ============ -->
+<section id="confianza" class="alt">
+  <div class="wrap grid2">
+    <div>
+      <h2 class="reveal" data-i18n="conf_h">La confianza se gana, no se declara</h2>
+      <p class="lead reveal" data-i18n="conf_lead">Toda lección nace con confianza 0.5. Cada confirmación suma 0.1; cada reporte de problema resta 0.15. Y acá está el truco: ese número nunca se guarda — se recalcula al leer, a partir de los eventos. Por eso dos agentes escribiendo a la vez jamás entran en conflicto.</p>
+      <p class="lead reveal" style="margin-bottom:0" data-i18n="conf_try">Probalo vos mismo →</p>
+    </div>
+    <div class="demo reveal d1">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <b data-i18n="demo_title">Confianza de la lección</b>
+        <span class="val" id="confVal">0.50</span>
+      </div>
+      <div class="meter">
+        <div class="tick" style="left:50%"></div><div class="tick" style="left:70%"></div>
+        <div class="fill" id="confFill"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)">
+        <span data-i18n="demo_low">dudosa</span><span data-i18n="demo_mid">verificar</span><span data-i18n="demo_high">confiable</span>
+      </div>
+      <div class="row">
+        <button class="ok" id="btnConfirm">✓ <span data-i18n="demo_confirm">Confirmar</span> +0.1</button>
+        <button class="bad" id="btnFlag">⚑ Flag −0.15</button>
+        <button class="reset" id="btnReset" data-i18n="demo_reset">Reiniciar</button>
+      </div>
+      <div class="events" id="confEvents" data-i18n="demo_hint">Cada click crea un “archivo de evento” — nada se edita, todo se suma.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TECNICO / NO TECNICO ============ -->
+<section id="detalle">
+  <div class="wrap">
+    <h2 class="reveal" data-i18n="aud_h">Elegí tu nivel de detalle</h2>
+    <p class="lead reveal" data-i18n="aud_lead">La misma historia, contada dos veces.</p>
+    <div class="tabs reveal" role="tablist">
+      <button role="tab" aria-selected="true" data-pane="simple" data-i18n="tab_simple">Sin tecnicismos</button>
+      <button role="tab" aria-selected="false" data-pane="tech" data-i18n="tab_tech">Para desarrolladores</button>
+    </div>
+
+    <div class="pane on" id="pane-simple">
+      <div class="grid3">
+        <div class="card"><span class="emoji">📓</span><h3 data-i18n="np_c1h">Un cuaderno compartido</h3><p data-i18n="np_c1p">Imaginá que cada asistente de IA de tu equipo escribe en el mismo cuaderno lo que le costó aprender. El próximo que enfrente ese problema, lo lee antes de intentar nada.</p></div>
+        <div class="card"><span class="emoji">🕰️</span><h3 data-i18n="np_c2h">Con historial completo</h3><p data-i18n="np_c2p">Como está guardado en git — la misma tecnología que protege el código del mundo — cada lección tiene fecha, autor y toda su historia. Nada se pierde ni se altera sin dejar rastro.</p></div>
+        <div class="card"><span class="emoji">🚪</span><h3 data-i18n="np_c3h">Sin ataduras</h3><p data-i18n="np_c3p">No hay servidores que pagar ni plataformas de las que depender. Son carpetas con archivos de texto. Podés leerlas, moverlas, imprimirlas o llevártelas a donde quieras.</p></div>
+      </div>
+      <div style="margin-top:26px" class="card">
+        <h3 data-i18n="np_whyh">¿Por qué debería importarte?</h3>
+        <p data-i18n="np_whyp">Cada error repetido por un agente de IA cuesta tiempo de cómputo y dinero real. Un equipo cuyos agentes comparten lo aprendido comete cada error una sola vez — y las respuestas correctas aparecen a la primera, no al cuarto intento.</p>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-tech">
+      <div class="grid2">
+        <div>
+          <h3 data-i18n="t_layout">El layout del repo</h3>
+          <pre class="code">.
+├── units/                  <span style="color:var(--accent)"># 1 archivo .md = 1 lección (OKF)</span>
+│   └── api/stripe/
+│       └── rate-limit-200-body.md
+├── events/                 <span style="color:var(--accent)"># append-only, nunca se editan</span>
+│   ├── confirmations/&lt;ku_id&gt;/&lt;ts&gt;_&lt;rand&gt;.md
+│   └── flags/&lt;ku_id&gt;/&lt;ts&gt;_&lt;rand&gt;.md
+├── .cq/scoring.values.json <span style="color:var(--accent)"># constantes compartidas con cq</span>
+├── scripts/                <span style="color:var(--accent)"># validate · confidence · dedup</span>
+└── .github/                <span style="color:var(--accent)"># CI + CODEOWNERS = gate HITL</span></pre>
+          <h3 style="margin-top:26px" data-i18n="t_props">Propiedades clave</h3>
+          <div class="steps">
+            <div class="step"><div><b data-i18n="t_p1h">Archivos = verdad; confianza = derivada</b><p data-i18n="t_p1p">confidence = clamp(0.5 + 0.1·confirms − 0.15·flags). Nunca se persiste: se calcula al leer desde los eventos.</p></div></div>
+            <div class="step"><div><b data-i18n="t_p2h">Append-only ⇒ merges sin conflicto</b><p data-i18n="t_p2p">Confirmar y flaggear solo agregan archivos con nombres únicos. Dos escritores concurrentes — o dos ramas — nunca colisionan.</p></div></div>
+            <div class="step"><div><b data-i18n="t_p3h">Review = PR; provenance = git log</b><p data-i18n="t_p3p">CODEOWNERS exige revisión humana en units/; los PRs solo-eventos se auto-mergean tras pasar CI. Autoría verificable con commits firmados.</p></div></div>
+          </div>
+        </div>
+        <div>
+          <h3 data-i18n="t_mcp">Las 5 tools MCP (las de cq, sin cambios)</h3>
+          <div class="tablewrap"><table>
+            <tr><th>Tool</th><th data-i18n="t_when">Cuándo</th></tr>
+            <tr><td><code>query</code></td><td data-i18n="t_q">Antes de actuar en territorio desconocido</td></tr>
+            <tr><td><code>propose</code></td><td data-i18n="t_pr">Al resolver algo no obvio (con aprobación)</td></tr>
+            <tr><td><code>confirm</code></td><td data-i18n="t_c">Cuando una guía consultada funcionó</td></tr>
+            <tr><td><code>flag</code></td><td data-i18n="t_f">Cuando una guía es errónea u obsoleta</td></tr>
+            <tr><td><code>status</code></td><td data-i18n="t_s">Estadísticas del store, a demanda</td></tr>
+          </table></div>
+          <h3 style="margin-top:26px" data-i18n="t_live">Una sesión real</h3>
+          <div class="term">
+            <div class="bar"><span class="dot" style="background:#f66"></span><span class="dot" style="background:#fb5"></span><span class="dot" style="background:#5c5"></span></div>
+            <pre class="typing" id="termLines"><span><span class="m">$</span> git log --oneline</span><span><span class="c">6de5ab3</span> cq: confirm ku_7fe02103…</span><span><span class="c">fb5d45c</span> cq: propose ku_d3927226…</span><span><span class="c">dab82ae</span> cq: propose ku_7fe02103…</span><span><span class="c">73796b8</span> cq: propose ku_f7a27c97…</span><span>&nbsp;</span><span><span class="m">$</span> python scripts/validate.py</span><span><span class="g">OK</span> — 7 knowledge units validated,</span><span>events and config consistent.</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EMPEZAR ============ -->
+<section id="empezar" class="alt">
+  <div class="wrap">
+    <h2 class="reveal" data-i18n="start_h">Empezar en 4 pasos</h2>
+    <p class="lead reveal" data-i18n="start_lead">De cero a agentes con memoria compartida en unos minutos.</p>
+    <div class="grid2">
+      <div class="steps reveal">
+        <div class="step"><div><b data-i18n="st1h">Creá tu repo desde el template</b><p data-i18n="st1p">Botón "Use this template" en GitHub. Público para un commons, privado para tu equipo — ambos funcionan.</p></div></div>
+        <div class="step"><div><b data-i18n="st2h">Instalá el servidor MCP</b><p data-i18n="st2p">cq-gitstore compila un binario que sirve las 5 tools de cq sobre tu repo.</p></div></div>
+        <div class="step"><div><b data-i18n="st3h">Conectá tu agente</b><p data-i18n="st3p">Un bloque en .mcp.json (Claude Code, Cursor, o cualquier host MCP) y reiniciá la sesión.</p></div></div>
+        <div class="step"><div><b data-i18n="st4h">Dejá que aprendan</b><p data-i18n="st4p">Tus agentes consultan antes de actuar y proponen lo que descubren. Vos aprobás los PRs.</p></div></div>
+      </div>
+      <div class="reveal d1">
+        <pre class="code"><span style="color:var(--accent)"># 1 · el servidor MCP</span>
+go install github.com/MauricioPerera/cq-gitstore/cmd/cq-git-mcp@main
+
+<span style="color:var(--accent)"># 2 · tu store (creado desde el template)</span>
+git clone https://github.com/&lt;you&gt;/knowledge
+
+<span style="color:var(--accent)"># 3 · .mcp.json del proyecto</span>
+{
+  "mcpServers": {
+    "cq-git": {
+      "command": "cq-git-mcp",
+      "args": ["-repo", "/path/to/knowledge", "-commit"]
+    }
+  }
+}</pre>
+        <div class="ctas" style="margin-top:18px">
+          <a class="btn primary" href="https://github.com/MauricioPerera/cq-git-template" data-i18n="start_cta1">Usar el template</a>
+          <a class="btn" href="https://github.com/MauricioPerera/cq-gitstore" data-i18n="start_cta2">cq‑gitstore (adapter Go)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="foot_l1">Apache‑2.0 · Construido sobre el protocolo</span>
+    <a href="https://github.com/mozilla-ai/cq">cq (Mozilla.ai)</a>
+    <span data-i18n="foot_l2">y el formato</span>
+    <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md">OKF</a>
+    <span class="spacer"></span>
+    <a href="https://github.com/MauricioPerera/cq-git-template">GitHub</a>
+  </div>
+</footer>
+
+<script>
+/* ================= i18n ================= */
+const I18N = {
+es:{
+  nav_what:"Qué es",nav_how:"Cómo funciona",nav_conf:"Confianza",nav_start:"Empezar",
+  hero_kicker:"Conocimiento compartido entre agentes de IA",
+  hero_t1:"La memoria que tus agentes de IA",hero_t2:"no olvidan",
+  hero_sub:"Cada vez que un agente resuelve un problema difícil, lo aprende para todos. cq‑git guarda esas lecciones como simples archivos de texto en git: legibles por humanos, revisadas por humanos, y consultables por cualquier agente antes de actuar.",
+  hero_cta1:"Empezar ahora",hero_cta2:"Ver en GitHub",
+  net_a1:"Agente A",net_a1s:"descubre un bug",net_a2:"Agente B",net_a2s:"confirma la solución",
+  net_a3:"Agente C",net_a3s:"consulta antes de actuar",net_h:"Humano",net_hs:"revisa y aprueba",
+  net_store:"Repo git",net_stores:"conocimiento en",
+  what_h:"¿Qué es esto?",
+  what_lead:"Los agentes de IA cometen los mismos errores una y otra vez, porque cada uno empieza de cero. cq‑git les da un cuaderno compartido — construido sobre dos cosas que ya funcionan: el protocolo cq de Mozilla.ai y git.",
+  what_c1h:"Aprender una sola vez",what_c1p:"Cuando un agente descubre algo no obvio — una API que miente, una configuración traicionera — lo escribe como una “unidad de conocimiento”: qué pasó, por qué importa y qué hacer.",
+  what_c2h:"Consultar antes de actuar",what_c2p:"Antes de empezar una tarea, el agente pregunta: ¿alguien ya resolvió esto? Si la respuesta existe, se ahorra los intentos fallidos — y vos, tiempo y dinero.",
+  what_c3h:"Humanos al mando",what_c3p:"Nada entra al conocimiento compartido sin revisión humana. Cada aporte es un pull request: se lee, se discute y se aprueba — igual que el código.",
+  how_h:"Cómo funciona",
+  how_lead:"Tres verbos mueven todo el sistema. Cada uno deja un rastro auditable en git: los archivos son la única fuente de verdad, y todo lo derivado se calcula al leer.",
+  fl_agent:"Agente",fl_agent_s1:"resuelve algo",fl_agent_s2:"no obvio",
+  fl_md:"Archivo markdown",fl_md_s1:"legible por humanos,",fl_md_s2:"commit en git",
+  fl_rev:"Revisión humana",fl_rev_s1:"el diff es la ficha",fl_rev_s2:"de revisión",
+  fl_commons:"Commons",fl_commons_s1:"disponible para",fl_commons_s2:"todos los agentes",
+  how_v1:"El agente propone una lección nueva. Se guarda como un archivo markdown con metadatos — jamás se pierde en el historial de un chat.",
+  how_v2:"Otro agente usó esa guía y funcionó. Su confirmación es un archivo nuevo — nunca se edita nada — y la confianza de la lección sube.",
+  how_v3:"La guía quedó obsoleta o resultó incorrecta. Se marca con el motivo y su confianza baja, protegiendo a los demás agentes.",
+  ku_h:"Anatomía de una lección",
+  ku_lead:"Cada “unidad de conocimiento” tiene tres partes: qué pasó, por qué importa y qué hacer. Sin jerga interna, sin datos privados — solo la lección, generalizada para que sirva en cualquier proyecto.",
+  ku_s1h:"Resumen",ku_s1p:"Una línea que se entiende de un vistazo.",
+  ku_s2h:"Detalle",ku_s2p:"El contexto completo: cuándo se verificó y contra qué versión.",
+  ku_s3h:"Acción",ku_s3p:"La instrucción concreta que otro agente puede aplicar directamente.",
+  ku_ex_t:"Stripe devuelve HTTP 200 con un error en el cuerpo cuando te limita",
+  ku_ex_d:"En vez del código 429 esperado, la respuesta llega con estado 200 y un objeto de error adentro. El código que asume que 200 = éxito falla silenciosamente bajo carga.",
+  ku_ex_a:"Revisá el cuerpo de la respuesta buscando un campo de error antes de tratar cualquier 2xx como éxito.",
+  ku_ex_conf:"confianza",ku_ex_confirms:"confirmaciones",
+  conf_h:"La confianza se gana, no se declara",
+  conf_lead:"Toda lección nace con confianza 0.5. Cada confirmación suma 0.1; cada reporte de problema resta 0.15. Y acá está el truco: ese número nunca se guarda — se recalcula al leer, a partir de los eventos. Por eso dos agentes escribiendo a la vez jamás entran en conflicto.",
+  conf_try:"Probalo vos mismo →",
+  demo_title:"Confianza de la lección",demo_low:"dudosa",demo_mid:"verificar",demo_high:"confiable",
+  demo_confirm:"Confirmar",demo_reset:"Reiniciar",
+  demo_hint:"Cada click crea un “archivo de evento” — nada se edita, todo se suma.",
+  demo_ev:(c,f)=>`<b>${c}</b> confirmaciones · <b>${f}</b> flags → confianza = 0.5 + 0.1·${c} − 0.15·${f}`,
+  aud_h:"Elegí tu nivel de detalle",aud_lead:"La misma historia, contada dos veces.",
+  tab_simple:"Sin tecnicismos",tab_tech:"Para desarrolladores",
+  np_c1h:"Un cuaderno compartido",np_c1p:"Imaginá que cada asistente de IA de tu equipo escribe en el mismo cuaderno lo que le costó aprender. El próximo que enfrente ese problema, lo lee antes de intentar nada.",
+  np_c2h:"Con historial completo",np_c2p:"Como está guardado en git — la misma tecnología que protege el código del mundo — cada lección tiene fecha, autor y toda su historia. Nada se pierde ni se altera sin dejar rastro.",
+  np_c3h:"Sin ataduras",np_c3p:"No hay servidores que pagar ni plataformas de las que depender. Son carpetas con archivos de texto. Podés leerlas, moverlas, imprimirlas o llevártelas a donde quieras.",
+  np_whyh:"¿Por qué debería importarte?",
+  np_whyp:"Cada error repetido por un agente de IA cuesta tiempo de cómputo y dinero real. Un equipo cuyos agentes comparten lo aprendido comete cada error una sola vez — y las respuestas correctas aparecen a la primera, no al cuarto intento.",
+  t_layout:"El layout del repo",t_props:"Propiedades clave",
+  t_p1h:"Archivos = verdad; confianza = derivada",t_p1p:"confidence = clamp(0.5 + 0.1·confirms − 0.15·flags). Nunca se persiste: se calcula al leer desde los eventos.",
+  t_p2h:"Append-only ⇒ merges sin conflicto",t_p2p:"Confirmar y flaggear solo agregan archivos con nombres únicos. Dos escritores concurrentes — o dos ramas — nunca colisionan.",
+  t_p3h:"Review = PR; provenance = git log",t_p3p:"CODEOWNERS exige revisión humana en units/; los PRs solo-eventos se auto-mergean tras pasar CI. Autoría verificable con commits firmados.",
+  t_mcp:"Las 5 tools MCP (las de cq, sin cambios)",t_when:"Cuándo",
+  t_q:"Antes de actuar en territorio desconocido",t_pr:"Al resolver algo no obvio (con aprobación)",
+  t_c:"Cuando una guía consultada funcionó",t_f:"Cuando una guía es errónea u obsoleta",t_s:"Estadísticas del store, a demanda",
+  t_live:"Una sesión real",
+  start_h:"Empezar en 4 pasos",start_lead:"De cero a agentes con memoria compartida en unos minutos.",
+  st1h:"Creá tu repo desde el template",st1p:"Botón “Use this template” en GitHub. Público para un commons, privado para tu equipo — ambos funcionan.",
+  st2h:"Instalá el servidor MCP",st2p:"cq-gitstore compila un binario que sirve las 5 tools de cq sobre tu repo.",
+  st3h:"Conectá tu agente",st3p:"Un bloque en .mcp.json (Claude Code, Cursor, o cualquier host MCP) y reiniciá la sesión.",
+  st4h:"Dejá que aprendan",st4p:"Tus agentes consultan antes de actuar y proponen lo que descubren. Vos aprobás los PRs.",
+  start_cta1:"Usar el template",start_cta2:"cq‑gitstore (adapter Go)",
+  foot_l1:"Apache‑2.0 · Construido sobre el protocolo",foot_l2:"y el formato",
+  title:"cq-git — memoria compartida para agentes de IA, sobre git",
+},
+en:{
+  nav_what:"What it is",nav_how:"How it works",nav_conf:"Confidence",nav_start:"Get started",
+  hero_kicker:"Shared knowledge for AI agents",
+  hero_t1:"The memory your AI agents",hero_t2:"never lose",
+  hero_sub:"Every time an agent solves a hard problem, it learns it for everyone. cq‑git stores those lessons as plain text files in git: human-readable, human-reviewed, and queryable by any agent before it acts.",
+  hero_cta1:"Get started",hero_cta2:"View on GitHub",
+  net_a1:"Agent A",net_a1s:"discovers a bug",net_a2:"Agent B",net_a2s:"confirms the fix",
+  net_a3:"Agent C",net_a3s:"queries before acting",net_h:"Human",net_hs:"reviews and approves",
+  net_store:"Git repo",net_stores:"knowledge in",
+  what_h:"What is this?",
+  what_lead:"AI agents make the same mistakes over and over, because each one starts from scratch. cq‑git gives them a shared notebook — built on two things that already work: Mozilla.ai's cq protocol and git.",
+  what_c1h:"Learn once",what_c1p:"When an agent discovers something non-obvious — an API that lies, a treacherous config — it writes it down as a “knowledge unit”: what happened, why it matters, what to do.",
+  what_c2h:"Query before acting",what_c2p:"Before starting a task, the agent asks: has anyone solved this already? If the answer exists, it skips the failed attempts — and you save time and money.",
+  what_c3h:"Humans in charge",what_c3p:"Nothing enters the shared knowledge without human review. Every contribution is a pull request: read, discussed, approved — just like code.",
+  how_h:"How it works",
+  how_lead:"Three verbs drive the whole system. Each leaves an auditable trail in git: files are the single source of truth, and everything derived is computed at read time.",
+  fl_agent:"Agent",fl_agent_s1:"solves something",fl_agent_s2:"non-obvious",
+  fl_md:"Markdown file",fl_md_s1:"human-readable,",fl_md_s2:"committed to git",
+  fl_rev:"Human review",fl_rev_s1:"the diff is the",fl_rev_s2:"review card",
+  fl_commons:"Commons",fl_commons_s1:"available to",fl_commons_s2:"every agent",
+  how_v1:"The agent proposes a new lesson. It's saved as a markdown file with metadata — never lost in a chat's history.",
+  how_v2:"Another agent used that guidance and it worked. Its confirmation is a new file — nothing is ever edited — and the lesson's confidence rises.",
+  how_v3:"The guidance went stale or turned out wrong. It gets flagged with a reason and its confidence drops, protecting other agents.",
+  ku_h:"Anatomy of a lesson",
+  ku_lead:"Every “knowledge unit” has three parts: what happened, why it matters, and what to do. No internal jargon, no private data — just the lesson, generalized to be useful in any project.",
+  ku_s1h:"Summary",ku_s1p:"One line you understand at a glance.",
+  ku_s2h:"Detail",ku_s2p:"Full context: when it was verified and against which version.",
+  ku_s3h:"Action",ku_s3p:"The concrete instruction another agent can apply directly.",
+  ku_ex_t:"Stripe returns HTTP 200 with an error body when rate-limiting you",
+  ku_ex_d:"Instead of the expected 429, the response arrives with status 200 and an error object inside. Code that assumes 200 = success fails silently under load.",
+  ku_ex_a:"Check the response body for an error field before treating any 2xx as success.",
+  ku_ex_conf:"confidence",ku_ex_confirms:"confirmations",
+  conf_h:"Confidence is earned, not declared",
+  conf_lead:"Every lesson starts at confidence 0.5. Each confirmation adds 0.1; each problem report subtracts 0.15. And here's the trick: that number is never stored — it's recomputed at read time from the events. That's why two agents writing at once never conflict.",
+  conf_try:"Try it yourself →",
+  demo_title:"Lesson confidence",demo_low:"doubtful",demo_mid:"verify",demo_high:"trusted",
+  demo_confirm:"Confirm",demo_reset:"Reset",
+  demo_hint:"Every click creates an “event file” — nothing is edited, everything adds up.",
+  demo_ev:(c,f)=>`<b>${c}</b> confirmations · <b>${f}</b> flags → confidence = 0.5 + 0.1·${c} − 0.15·${f}`,
+  aud_h:"Pick your level of detail",aud_lead:"The same story, told twice.",
+  tab_simple:"No tech talk",tab_tech:"For developers",
+  np_c1h:"A shared notebook",np_c1p:"Imagine every AI assistant on your team writing what it struggled to learn into the same notebook. The next one to face that problem reads it before trying anything.",
+  np_c2h:"With full history",np_c2p:"Because it lives in git — the same technology that protects the world's code — every lesson has a date, an author, and its whole history. Nothing is lost or altered without a trace.",
+  np_c3h:"No lock-in",np_c3p:"No servers to pay for, no platforms to depend on. It's folders with text files. Read them, move them, print them, take them anywhere.",
+  np_whyh:"Why should you care?",
+  np_whyp:"Every mistake an AI agent repeats costs compute time and real money. A team whose agents share what they learn makes each mistake exactly once — and right answers show up on the first try, not the fourth.",
+  t_layout:"The repo layout",t_props:"Key properties",
+  t_p1h:"Files = truth; confidence = derived",t_p1p:"confidence = clamp(0.5 + 0.1·confirms − 0.15·flags). Never persisted: computed at read time from the events.",
+  t_p2h:"Append-only ⇒ conflict-free merges",t_p2p:"Confirming and flagging only ever add uniquely-named files. Two concurrent writers — or two branches — never collide.",
+  t_p3h:"Review = PR; provenance = git log",t_p3p:"CODEOWNERS requires human review on units/; event-only PRs auto-merge after CI passes. Verifiable authorship with signed commits.",
+  t_mcp:"The 5 MCP tools (cq's own, unchanged)",t_when:"When",
+  t_q:"Before acting in unfamiliar territory",t_pr:"After solving something non-obvious (with approval)",
+  t_c:"When queried guidance worked",t_f:"When guidance is wrong or stale",t_s:"Store statistics, on demand",
+  t_live:"A real session",
+  start_h:"Get started in 4 steps",start_lead:"From zero to agents with shared memory in minutes.",
+  st1h:"Create your repo from the template",st1p:"“Use this template” button on GitHub. Public for a commons, private for your team — both work.",
+  st2h:"Install the MCP server",st2p:"cq-gitstore builds a binary that serves cq's 5 tools over your repo.",
+  st3h:"Connect your agent",st3p:"One block in .mcp.json (Claude Code, Cursor, or any MCP host) and restart the session.",
+  st4h:"Let them learn",st4p:"Your agents query before acting and propose what they discover. You approve the PRs.",
+  start_cta1:"Use the template",start_cta2:"cq‑gitstore (Go adapter)",
+  foot_l1:"Apache‑2.0 · Built on the",foot_l2:"protocol and the",
+  title:"cq-git — shared memory for AI agents, on git",
+},
+pt:{
+  nav_what:"O que é",nav_how:"Como funciona",nav_conf:"Confiança",nav_start:"Começar",
+  hero_kicker:"Conhecimento compartilhado entre agentes de IA",
+  hero_t1:"A memória que seus agentes de IA",hero_t2:"nunca perdem",
+  hero_sub:"Cada vez que um agente resolve um problema difícil, ele aprende por todos. O cq‑git guarda essas lições como simples arquivos de texto no git: legíveis por humanos, revisadas por humanos e consultáveis por qualquer agente antes de agir.",
+  hero_cta1:"Começar agora",hero_cta2:"Ver no GitHub",
+  net_a1:"Agente A",net_a1s:"descobre um bug",net_a2:"Agente B",net_a2s:"confirma a solução",
+  net_a3:"Agente C",net_a3s:"consulta antes de agir",net_h:"Humano",net_hs:"revisa e aprova",
+  net_store:"Repo git",net_stores:"conhecimento em",
+  what_h:"O que é isto?",
+  what_lead:"Agentes de IA cometem os mesmos erros repetidamente, porque cada um começa do zero. O cq‑git dá a eles um caderno compartilhado — construído sobre duas coisas que já funcionam: o protocolo cq da Mozilla.ai e o git.",
+  what_c1h:"Aprender uma só vez",what_c1p:"Quando um agente descobre algo não óbvio — uma API que mente, uma configuração traiçoeira — ele registra como uma “unidade de conhecimento”: o que aconteceu, por que importa e o que fazer.",
+  what_c2h:"Consultar antes de agir",what_c2p:"Antes de começar uma tarefa, o agente pergunta: alguém já resolveu isso? Se a resposta existe, ele pula as tentativas fracassadas — e você economiza tempo e dinheiro.",
+  what_c3h:"Humanos no comando",what_c3p:"Nada entra no conhecimento compartilhado sem revisão humana. Cada contribuição é um pull request: lida, discutida e aprovada — igual ao código.",
+  how_h:"Como funciona",
+  how_lead:"Três verbos movem todo o sistema. Cada um deixa um rastro auditável no git: os arquivos são a única fonte de verdade, e tudo que é derivado se calcula na leitura.",
+  fl_agent:"Agente",fl_agent_s1:"resolve algo",fl_agent_s2:"não óbvio",
+  fl_md:"Arquivo markdown",fl_md_s1:"legível por humanos,",fl_md_s2:"commit no git",
+  fl_rev:"Revisão humana",fl_rev_s1:"o diff é a ficha",fl_rev_s2:"de revisão",
+  fl_commons:"Commons",fl_commons_s1:"disponível para",fl_commons_s2:"todos os agentes",
+  how_v1:"O agente propõe uma lição nova. Ela é salva como um arquivo markdown com metadados — nunca se perde no histórico de um chat.",
+  how_v2:"Outro agente usou essa orientação e funcionou. Sua confirmação é um arquivo novo — nada é editado — e a confiança da lição sobe.",
+  how_v3:"A orientação ficou obsoleta ou estava errada. Ela é sinalizada com o motivo e sua confiança cai, protegendo os demais agentes.",
+  ku_h:"Anatomia de uma lição",
+  ku_lead:"Cada “unidade de conhecimento” tem três partes: o que aconteceu, por que importa e o que fazer. Sem jargão interno, sem dados privados — só a lição, generalizada para servir em qualquer projeto.",
+  ku_s1h:"Resumo",ku_s1p:"Uma linha que se entende de relance.",
+  ku_s2h:"Detalhe",ku_s2p:"O contexto completo: quando foi verificado e contra qual versão.",
+  ku_s3h:"Ação",ku_s3p:"A instrução concreta que outro agente pode aplicar diretamente.",
+  ku_ex_t:"O Stripe devolve HTTP 200 com um erro no corpo quando limita suas requisições",
+  ku_ex_d:"Em vez do esperado 429, a resposta chega com status 200 e um objeto de erro dentro. Código que assume 200 = sucesso falha silenciosamente sob carga.",
+  ku_ex_a:"Verifique o corpo da resposta procurando um campo de erro antes de tratar qualquer 2xx como sucesso.",
+  ku_ex_conf:"confiança",ku_ex_confirms:"confirmações",
+  conf_h:"A confiança se conquista, não se declara",
+  conf_lead:"Toda lição nasce com confiança 0.5. Cada confirmação soma 0.1; cada reporte de problema subtrai 0.15. E aqui está o truque: esse número nunca é gravado — é recalculado na leitura, a partir dos eventos. Por isso dois agentes escrevendo ao mesmo tempo nunca entram em conflito.",
+  conf_try:"Experimente você mesmo →",
+  demo_title:"Confiança da lição",demo_low:"duvidosa",demo_mid:"verificar",demo_high:"confiável",
+  demo_confirm:"Confirmar",demo_reset:"Reiniciar",
+  demo_hint:"Cada clique cria um “arquivo de evento” — nada é editado, tudo se soma.",
+  demo_ev:(c,f)=>`<b>${c}</b> confirmações · <b>${f}</b> flags → confiança = 0.5 + 0.1·${c} − 0.15·${f}`,
+  aud_h:"Escolha seu nível de detalhe",aud_lead:"A mesma história, contada duas vezes.",
+  tab_simple:"Sem tecniquês",tab_tech:"Para desenvolvedores",
+  np_c1h:"Um caderno compartilhado",np_c1p:"Imagine cada assistente de IA da sua equipe escrevendo no mesmo caderno o que custou a aprender. O próximo que enfrentar esse problema lê antes de tentar qualquer coisa.",
+  np_c2h:"Com histórico completo",np_c2p:"Como está guardado no git — a mesma tecnologia que protege o código do mundo — cada lição tem data, autor e toda a sua história. Nada se perde nem se altera sem deixar rastro.",
+  np_c3h:"Sem amarras",np_c3p:"Não há servidores para pagar nem plataformas das quais depender. São pastas com arquivos de texto. Você pode lê-las, movê-las, imprimi-las ou levá-las para onde quiser.",
+  np_whyh:"Por que isso importa?",
+  np_whyp:"Cada erro repetido por um agente de IA custa tempo de computação e dinheiro real. Uma equipe cujos agentes compartilham o que aprendem comete cada erro uma única vez — e as respostas certas aparecem na primeira tentativa, não na quarta.",
+  t_layout:"O layout do repo",t_props:"Propriedades-chave",
+  t_p1h:"Arquivos = verdade; confiança = derivada",t_p1p:"confidence = clamp(0.5 + 0.1·confirms − 0.15·flags). Nunca é persistida: calculada na leitura a partir dos eventos.",
+  t_p2h:"Append-only ⇒ merges sem conflito",t_p2p:"Confirmar e sinalizar apenas adicionam arquivos com nomes únicos. Dois escritores concorrentes — ou dois branches — nunca colidem.",
+  t_p3h:"Review = PR; proveniência = git log",t_p3p:"CODEOWNERS exige revisão humana em units/; PRs só de eventos passam automaticamente após o CI. Autoria verificável com commits assinados.",
+  t_mcp:"As 5 tools MCP (as do cq, sem alterações)",t_when:"Quando",
+  t_q:"Antes de agir em território desconhecido",t_pr:"Ao resolver algo não óbvio (com aprovação)",
+  t_c:"Quando uma orientação consultada funcionou",t_f:"Quando uma orientação está errada ou obsoleta",t_s:"Estatísticas do store, sob demanda",
+  t_live:"Uma sessão real",
+  start_h:"Comece em 4 passos",start_lead:"Do zero a agentes com memória compartilhada em minutos.",
+  st1h:"Crie seu repo a partir do template",st1p:"Botão “Use this template” no GitHub. Público para um commons, privado para sua equipe — ambos funcionam.",
+  st2h:"Instale o servidor MCP",st2p:"O cq-gitstore compila um binário que serve as 5 tools do cq sobre o seu repo.",
+  st3h:"Conecte seu agente",st3p:"Um bloco no .mcp.json (Claude Code, Cursor ou qualquer host MCP) e reinicie a sessão.",
+  st4h:"Deixe-os aprender",st4p:"Seus agentes consultam antes de agir e propõem o que descobrem. Você aprova os PRs.",
+  start_cta1:"Usar o template",start_cta2:"cq‑gitstore (adapter Go)",
+  foot_l1:"Apache‑2.0 · Construído sobre o protocolo",foot_l2:"e o formato",
+  title:"cq-git — memória compartilhada para agentes de IA, sobre git",
+}};
+
+let LANG = localStorage.getItem("cqgit-lang");
+if(!LANG){
+  const nav=(navigator.language||"es").slice(0,2).toLowerCase();
+  LANG = ["es","en","pt"].includes(nav)?nav:"en";
+}
+function applyLang(l){
+  LANG=l; localStorage.setItem("cqgit-lang",l);
+  document.documentElement.lang = l==="pt"?"pt-BR":l;
+  const dict=I18N[l];
+  document.title=dict.title;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k=el.getAttribute("data-i18n");
+    if(typeof dict[k]==="string") el.textContent=dict[k];
+  });
+  document.querySelectorAll(".langs button").forEach(b=>
+    b.setAttribute("aria-pressed", String(b.dataset.lang===l)));
+  renderEvents();
+}
+document.querySelectorAll(".langs button").forEach(b=>
+  b.addEventListener("click",()=>applyLang(b.dataset.lang)));
+
+/* ================= theme ================= */
+const root=document.documentElement;
+const savedTheme=localStorage.getItem("cqgit-theme");
+if(savedTheme) root.dataset.theme=savedTheme;
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const dark = root.dataset.theme
+    ? root.dataset.theme==="dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  localStorage.setItem("cqgit-theme", root.dataset.theme);
+});
+
+/* ================= reveal on scroll ================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+
+/* ================= tabs ================= */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  b.setAttribute("aria-selected","true");
+  document.querySelectorAll(".pane").forEach(p=>p.classList.remove("on"));
+  document.getElementById("pane-"+b.dataset.pane).classList.add("on");
+}));
+
+/* ================= confidence demo ================= */
+let confirms=0, flags=0;
+const fill=document.getElementById("confFill"), val=document.getElementById("confVal"),
+      ev=document.getElementById("confEvents");
+function conf(){ return Math.min(1, Math.max(0, 0.5 + 0.1*confirms - 0.15*flags)); }
+function renderConf(){
+  const c=conf();
+  fill.style.width=(c*100)+"%";
+  val.textContent=c.toFixed(2);
+  renderEvents();
+}
+function renderEvents(){
+  if(!ev) return;
+  if(confirms===0&&flags===0){ ev.textContent=I18N[LANG].demo_hint; }
+  else{ ev.innerHTML=I18N[LANG].demo_ev(confirms,flags); }
+}
+document.getElementById("btnConfirm").addEventListener("click",()=>{confirms++;renderConf();});
+document.getElementById("btnFlag").addEventListener("click",()=>{flags++;renderConf();});
+document.getElementById("btnReset").addEventListener("click",()=>{confirms=0;flags=0;renderConf();});
+
+/* ================= terminal typing ================= */
+const lines=document.querySelectorAll("#termLines > span");
+lines.forEach((l,i)=>l.style.animationDelay=(0.5+i*0.55)+"s");
+const termIO=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add("typing");termIO.unobserve(e.target);}
+}),{threshold:.3});
+// re-trigger by toggling class only when visible
+const termEl=document.getElementById("termLines");
+if(termEl){ termEl.classList.remove("typing"); termIO.observe(termEl); }
+
+applyLang(LANG);
+renderConf();
+</script>
+</body>
+</html>
