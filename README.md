@@ -124,6 +124,41 @@ python scripts/check_dedup.py --all   # pairwise near-duplicate report
 
 Only dependency: `pyyaml`.
 
+## Consume the commons as verified MCP tools
+
+Because KUs are OKF markdown, the whole commons can be published as a
+serverless, hash-verified RAG that **any MCP agent can search** — no server,
+no vector DB:
+
+```bash
+# once, in the repo root (regenerate when units/ changes; both are CI-checkable)
+npx -y @rckflr/llms-skills memory units
+npx -y @rckflr/llms-skills publish
+```
+
+That emits a BM25 snapshot of every KU pinned by SHA-256 in `llms.txt`, plus
+three executable skills (`search_knowledge` / `get_concept` /
+`list_concepts`). Any consumer turns the repo into an MCP server in one
+command:
+
+```bash
+npx -y @rckflr/mcpwasm --serve . --port 8080     # local clone
+# or, with the repo on GitHub Pages at a root site: npx -y @rckflr/mcpwasm <origin>
+```
+
+The runtime re-verifies every byte against the declared hashes before loading
+anything, and runs each skill in a QuickJS-WebAssembly sandbox — so agents
+query the shared knowledge with integrity guarantees, not just availability.
+See [llms-txt-skills](https://mauricioperera.github.io/llms-txt-skills/) and
+[mcpwasm](https://mauricioperera.github.io/mcpwasm/).
+
+Optional extra ring: [signed knowledge freshness](https://github.com/MauricioPerera/llms-txt-skills/tree/master/cli#knowledge-freshness-freshness--attest)
+(`llms-skills freshness units` / `attest`) — KUs already carry `timestamp`,
+so TTL checks work out of the box, and a signed attestation is the
+cryptographic upgrade of a cq `confirm`: a registered reviewer signs
+"still true", bound to the KU's exact content (voided by any edit — the
+`superseded_by` semantics) and expiring on a date.
+
 ## Conformance
 
 Bundles produced by this template are OKF v0.1 conformant: every non-reserved
