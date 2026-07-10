@@ -133,6 +133,6 @@ graph viewers) can browse the repo without understanding cq semantics.
 
 ## License
 
-Choose one before publishing (cq uses Apache-2.0; OKF's spec repo uses Apache-2.0).
-Remember knowledge contributions may warrant a contributor agreement distinct
-from the code license — see cq's `CONTRIBUTOR_AGREEMENT.md` for a model.
+[Apache-2.0](LICENSE). Note that knowledge contributions may warrant a
+contributor agreement distinct from the code license — see cq's
+`CONTRIBUTOR_AGREEMENT.md` for a model.
