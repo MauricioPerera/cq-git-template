@@ -145,19 +145,20 @@ h2{font-size:clamp(1.5rem,2.8vw,2.1rem);margin:0 0 10px;letter-spacing:-.01em}
 .term{background:#14131f;border-radius:14px;border:1px solid #2a2838;box-shadow:var(--shadow);overflow:hidden}
 .term .bar{display:flex;gap:6px;padding:10px 14px;background:#1b1a29;border-bottom:1px solid #2a2838}
 .term .dot{width:11px;height:11px;border-radius:50%}
-.term pre{margin:0;padding:18px;color:#d6d2ea;font-size:.84rem;line-height:1.7;overflow-x:auto}
+.term pre{margin:0;padding:18px;color:#d6d2ea;font-size:.84rem;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
 .term .c{color:#8f7df5}.term .g{color:#4cc985}.term .m{color:#7f7b93}.term .y{color:#eab308}
 .typing span{display:block;opacity:0;animation:lineIn .01s forwards}
 @keyframes lineIn{to{opacity:1}}
 
 /* tree + tables + code */
 pre.code{background:var(--code);color:var(--codeink);border:1px solid var(--line);border-radius:14px;
-  padding:18px;font-size:.85rem;line-height:1.65;overflow-x:auto;margin:0}
-table{width:100%;border-collapse:collapse;font-size:.92rem}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  padding:18px;font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+table{width:100%;border-collapse:collapse;font-size:.92rem;table-layout:fixed}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 th{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}
 td code{background:var(--code);padding:2px 7px;border-radius:6px;font-size:.85rem}
-.tablewrap{overflow-x:auto}
+table col.narrow,table th:first-child,table td:first-child{width:32%}
+@media (max-width:480px){pre.code,.term pre{font-size:.72rem}}
 
 /* audience tabs */
 .tabs{display:inline-flex;background:var(--code);border-radius:12px;padding:4px;margin-bottom:26px}
