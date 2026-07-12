@@ -2,6 +2,33 @@
 
 > 🌐 **[Visual guide (ES · EN · PT)](https://mauricioperera.github.io/cq-git-template/)** — how it works, for technical and non-technical readers.
 
+## An open, git-native alternative to Custom GPTs
+
+A [Custom GPT](https://openai.com/index/introducing-gpts/) bundles three
+things behind a closed platform: a system prompt, a fixed knowledge base, and
+whatever access control OpenAI gives you. This repo builds the same three
+things as plain, auditable Git:
+
+| | Custom GPT | Here |
+|---|---|---|
+| System prompt | Locked in OpenAI's UI | [`assistants/<slug>/assistant.md`](assistants/soporte-stripe/assistant.md) — a Markdown file, reviewed by PR |
+| Knowledge base | Uploaded files, opaque retrieval | [`units/`](units/) — versioned KUs with provenance, confidence, and required citations |
+| Access scope | Whatever the platform allows | `knowledge.md` — an explicit allow-list of KU ids per assistant, enforced by [`scripts/validate.py`](scripts/validate.py) and at runtime by [`scripts/assistant_mcp_server.py`](scripts/assistant_mcp_server.py) |
+| Runtime | OpenAI's servers, any LLM they choose | Bring your own: connect the MCP server to Claude Code, or any MCP-capable agent |
+
+No vendor lock-in, no black-box retrieval: every fact an assistant can cite
+has a file, a diff, an author, and a confidence score computed from
+confirm/flag events — never just "trust the upload." See
+[**Usar un asistente**](#usar-un-asistente-sin-conocimientos-técnicos) to
+define one and [**Serve one assistant as a scoped MCP server**](#serve-one-assistant-as-a-scoped-mcp-server)
+to connect it to an agent.
+
+The rest of this README documents the underlying commons — the knowledge
+storage layer that makes assistants auditable instead of another opaque
+upload.
+
+## The underlying commons
+
 Template for a git-based agent knowledge commons: knowledge units (KUs) stored as
 [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)-conformant
 markdown files, with the dynamic protocol of [cq](https://github.com/mozilla-ai/cq)
