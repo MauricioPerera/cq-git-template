@@ -8,7 +8,8 @@
 #
 # Replace the placeholder teams before enabling branch protection.
 
-/units/    @YOUR-ORG/knowledge-reviewers
-/.cq/      @YOUR-ORG/knowledge-admins
-/.github/  @YOUR-ORG/knowledge-admins
-/scripts/  @YOUR-ORG/knowledge-admins
+/units/       @YOUR-ORG/knowledge-reviewers
+/assistants/  @YOUR-ORG/knowledge-reviewers
+/.cq/         @YOUR-ORG/knowledge-admins
+/.github/     @YOUR-ORG/knowledge-admins
+/scripts/     @YOUR-ORG/knowledge-admins

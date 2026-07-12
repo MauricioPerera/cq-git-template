@@ -21,12 +21,18 @@ committed.** That is why git never has merge conflicts over mutable state.
 ├── events/                      # append-only; one file = one event; never edited or deleted
 │   ├── confirmations/<ku_id>/<timestamp>_<rand>.md
 │   └── flags/<ku_id>/<timestamp>_<rand>.md
+├── assistants/                  # versioned assistant definitions
+│   └── <slug>/
+│       ├── assistant.md         # identity, policies and instructions
+│       └── knowledge.md         # explicit list of allowed KU ids
 ├── .cq/
 │   ├── remotes.yaml             # upstream repos and their tier / write policy
 │   └── scoring.values.json      # scoring constants (same values as cq)
 ├── scripts/
 │   ├── validate.py              # conformance + integrity checks (used by CI)
 │   ├── confidence.py            # derived confidence table, computed from events
+│   ├── assistant_summary.py     # readable, derived view of one assistant
+│   ├── assistant_mcp_server.py  # MCP server scoped to one assistant
 │   └── check_dedup.py           # near-duplicate detection for new KUs
 └── .github/
     ├── CODEOWNERS               # human review = the HITL dashboard
@@ -125,6 +131,74 @@ python scripts/check_dedup.py --all   # pairwise near-duplicate report
 ```
 
 Only dependency: `pyyaml`.
+
+## Usar un asistente (sin conocimientos técnicos)
+
+Un asistente es una definición revisable en Git: describe su propósito, sus
+instrucciones y exactamente qué unidades de conocimiento puede consultar. No
+incluye un chat ni se conecta a ningún proveedor de IA.
+
+Para ver el asistente de ejemplo, abre
+[`assistants/soporte-stripe/assistant.md`](assistants/soporte-stripe/assistant.md).
+Su archivo `knowledge.md` enumera las KUs permitidas mediante IDs exactos en
+backticks o elementos de lista Markdown. El validador comprueba esa estructura,
+el índice de asistentes y, con la política `cited_only`, que cada KU tenga una
+sección `# Citations` con al menos un enlace Markdown utilizable. Para comprobar
+los archivos y vínculos, ejecuta desde la carpeta del repositorio:
+
+```console
+python scripts/validate.py
+```
+
+Para obtener una ficha legible con la identidad, instrucciones, descripción,
+citas y confianza actual de cada KU vinculada, ejecuta:
+
+```console
+python scripts/assistant_summary.py . soporte-stripe
+```
+
+La confianza se calcula al momento desde confirmaciones, flags y
+`.cq/scoring.values.json`; la ficha no modifica ni guarda ningún dato. Para
+crear otro asistente, copia la carpeta de ejemplo, asigna un `id` único que
+empiece por `assistant_`, usa un código de idioma BCP-47 simple (por ejemplo,
+`es` o `en-US`), edita las instrucciones, añade su enlace a
+`assistants/index.md` y lista al menos un ID de KU existente en `knowledge.md`.
+
+## Serve one assistant as a scoped MCP server
+
+The generic MCP below serves the whole `units/` commons unscoped — any agent
+can search any KU. `scripts/assistant_mcp_server.py` instead serves exactly
+one `assistants/<slug>/` definition: its `# Instructions` as a system prompt,
+and only the KU ids listed in that assistant's `knowledge.md` — enforcing
+`cited_only` at read time, not just in CI.
+
+Extra dependency beyond `pyyaml`: `pip install mcp`.
+
+```bash
+CQ_ASSISTANT_SLUG=soporte-stripe python scripts/assistant_mcp_server.py
+```
+
+Tools exposed: `cq_assistant_get_profile`, `cq_assistant_list_knowledge`,
+`cq_assistant_search_knowledge`, `cq_assistant_get_knowledge` — the last one
+refuses any `ku_id` outside `knowledge.md` and any KU missing a usable
+citation under `cited_only`.
+
+To connect it to Claude Code, add to `.mcp.json` in the repo root:
+
+```json
+{
+  "mcpServers": {
+    "cq-assistant-soporte-stripe": {
+      "command": "python",
+      "args": ["scripts/assistant_mcp_server.py"],
+      "env": { "CQ_ASSISTANT_SLUG": "soporte-stripe" }
+    }
+  }
+}
+```
+
+One MCP server = one assistant. To serve another assistant, add another
+entry with its own `CQ_ASSISTANT_SLUG`.
 
 ## Consume the commons as verified MCP tools
 
