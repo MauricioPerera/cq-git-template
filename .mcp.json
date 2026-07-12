@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cq-assistant-soporte-stripe": {
+      "command": "python",
+      "args": ["scripts/assistant_mcp_server.py"],
+      "env": { "CQ_ASSISTANT_SLUG": "soporte-stripe" }
+    }
+  }
+}
