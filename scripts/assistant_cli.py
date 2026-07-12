@@ -85,7 +85,8 @@ def cmd_list(state: dict) -> str:
     return "\n".join(lines)
 
 
-def cmd_search(state: dict, query: str) -> str:
+def search(state: dict, query: str) -> list[tuple[int, str, dict]]:
+    """Score permitted KUs by token overlap with query; (score, ku_id, fm), sorted desc."""
     terms = [t for t in query.lower().split() if t]
     scored = []
     for ku_id in state["permitted"]:
@@ -98,9 +99,14 @@ def cmd_search(state: dict, query: str) -> str:
         score = sum(1 for t in terms if t in haystack)
         if score:
             scored.append((score, ku_id, fm))
+    scored.sort(key=lambda row: row[0], reverse=True)
+    return scored
+
+
+def cmd_search(state: dict, query: str) -> str:
+    scored = search(state, query)
     if not scored:
         return f"No matches for '{query}' in this assistant's permitted knowledge."
-    scored.sort(key=lambda row: row[0], reverse=True)
     lines = [f"# Matches for '{query}'", ""]
     for score, ku_id, fm in scored:
         lines.append(f"## `{ku_id}` (score {score})")

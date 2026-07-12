@@ -14,7 +14,7 @@ things as plain, auditable Git:
 | System prompt | Locked in OpenAI's UI | [`assistants/<slug>/assistant.md`](assistants/soporte-stripe/assistant.md) — a Markdown file, reviewed by PR |
 | Knowledge base | Uploaded files, opaque retrieval | [`units/`](units/) — versioned KUs with provenance, confidence, and required citations |
 | Access scope | Whatever the platform allows | `knowledge.md` — an explicit allow-list of KU ids per assistant, enforced by [`scripts/validate.py`](scripts/validate.py) and at runtime by [`scripts/assistant_mcp_server.py`](scripts/assistant_mcp_server.py) |
-| Runtime | OpenAI's servers, any LLM they choose | Bring your own: connect the MCP server to Claude Code, or use the CLI directly from a terminal/CI |
+| Runtime | OpenAI's servers, any LLM they choose | Bring your own: connect the MCP server to an agent, use the CLI directly, or run `assistant_run.py` end-to-end against any model the [Antigravity CLI](https://antigravity.google) exposes (Gemini, Claude, GPT-OSS) |
 
 No vendor lock-in, no black-box retrieval: every fact an assistant can cite
 has a file, a diff, an author, and a confidence score computed from
@@ -61,6 +61,7 @@ committed.** That is why git never has merge conflicts over mutable state.
 │   ├── assistant_summary.py     # readable, derived view of one assistant
 │   ├── assistant_mcp_server.py  # MCP server scoped to one assistant
 │   ├── assistant_cli.py         # terminal/CI equivalent, no MCP dependency
+│   ├── assistant_run.py         # end-to-end: question -> scoped prompt -> agy CLI answer
 │   └── check_dedup.py           # near-duplicate detection for new KUs
 └── .github/
     ├── CODEOWNERS               # human review = the HITL dashboard
@@ -243,6 +244,24 @@ python scripts/assistant_cli.py . soporte-stripe get ku_a1b2c3d4e5f60718293a4b5c
 
 Same scoping rules as the MCP server: refuses ids outside `knowledge.md` and
 KUs without a usable citation under `cited_only`.
+
+### Running the assistant end-to-end with a real model
+
+`scripts/assistant_run.py` is the missing runtime piece: it takes a
+question, uses the same scoping as the CLI/MCP to find matching permitted
+KUs, assembles a prompt (instructions + full KU content), and hands it to
+the [Antigravity CLI](https://antigravity.google) (`agy -p`) to get a real
+answer — no LLM call happens if no permitted KU matches the question.
+
+Requires `agy` on PATH and an authenticated session (`agy -p "hi"` should
+just print a reply).
+
+```console
+python scripts/assistant_run.py . soporte-stripe -- "¿Por qué se nos pierden errores de Stripe bajo carga?"
+```
+
+`--model` (default `Gemini 3.5 Flash (Medium)`, see `agy models` for others)
+and `--top` (max KUs included as context, default 3) are configurable.
 
 ## Consume the commons as verified MCP tools
 
