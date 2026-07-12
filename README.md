@@ -1,6 +1,7 @@
 # cq-git — Shared agent knowledge, on git
 
 > 🌐 **[Visual guide (ES · EN · PT)](https://mauricioperera.github.io/cq-git-template/)** — how it works, for technical and non-technical readers.
+> 🤖 **[Assistants guide (ES · EN · PT)](https://mauricioperera.github.io/cq-git-template/assistants.html)** — the Custom GPT alternative, explained without jargon.
 
 ## An open, git-native alternative to Custom GPTs
 
